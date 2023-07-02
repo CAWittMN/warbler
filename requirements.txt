@@ -5,6 +5,7 @@ blinker
 cffi
 Click
 decorator
+email_validator
 Faker
 Flask
 Flask-Bcrypt
