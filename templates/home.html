@@ -57,20 +57,22 @@
         <div class="message-area">
           <a href="/users/{{ msg.user.id }}">@{{ msg.user.username }}</a>
           <span class="text-muted"
-            >{{ msg.timestamp.strftime('%d %B %Y') }}</span
+            >{{ msg.timestamp.strftime('%d %B %Y') }} - {{ msg.likes|length }}
+            likes</span
           >
           <p>{{ msg.text }}</p>
         </div>
         <form
           method="POST"
-          action="/users/add_like/{{ msg.id }}"
+          action="/users/add_remove_like/{{ msg.id }}"
           id="messages-form"
         >
           <button
             class="
                 btn 
                 btn-sm 
-                {{'btn-primary' if msg.id in likes else 'btn-secondary'}}"
+                {{'btn-primary' if msg in g.user.likes else 'btn-secondary'}}
+                {{'hidden' if msg.user == g.user}}"
           >
             <i class="fa fa-thumbs-up"></i>
           </button>

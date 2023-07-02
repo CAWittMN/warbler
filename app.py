@@ -112,12 +112,11 @@ def login():
 
 @app.route("/logout")
 def logout():
+    """Handle logout of user."""
+
     do_logout()
 
     return redirect(url_for("homepage"))
-    """Handle logout of user."""
-
-    # IMPLEMENT THIS
 
 
 ##############################################################################
@@ -212,15 +211,14 @@ def stop_following(follow_id):
     return redirect(f"/users/{g.user.id}/following")
 
 
-@app.route("/users/profile/<int:user_id>", methods=["GET", "POST"])
-def profile(user_id):
+@app.route("/users/profile", methods=["GET", "POST"])
+def profile():
     """Update profile for current user."""
 
     if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
-
-    user = User.query.get_or_404(user_id)
+    user = g.user
     form = EditUserForm(obj=user)
 
     if form.validate_on_submit():
@@ -236,7 +234,7 @@ def profile(user_id):
 
         else:
             flash("Invalid password", "danger")
-            return redirect(url_for("profile", user_id=user.id))
+            return redirect(url_for("profile"))
 
     return render_template("users/edit.html", form=form, user=user)
 
@@ -255,6 +253,21 @@ def delete_user():
     db.session.commit()
 
     return redirect("/signup")
+
+
+@app.route("/users/add_remove_like/<int:msg_id>", methods=["POST"])
+def add_remove_like(msg_id):
+    """Add a like for the currently-logged-in user."""
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+    liked_msg = Message.query.get_or_404(msg_id)
+    if liked_msg in g.user.likes:
+        g.user.likes.remove(liked_msg)
+    else:
+        g.user.likes.append(liked_msg)
+    db.session.commit()
+    return redirect(url_for("messages_show", message_id=msg_id))
 
 
 ##############################################################################
@@ -320,7 +333,13 @@ def homepage():
     """
 
     if g.user:
-        messages = Message.query.order_by(Message.timestamp.desc()).limit(100).all()
+        followed_ids = [f.id for f in g.user.following]
+        messages = (
+            Message.query.filter(Message.user_id.in_(followed_ids))
+            .order_by(Message.timestamp.desc())
+            .limit(100)
+            .all()
+        )
 
         return render_template("home.html", messages=messages)
 
